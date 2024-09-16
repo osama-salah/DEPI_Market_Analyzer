@@ -4,7 +4,8 @@ import json
 
 app = Flask(__name__)
 
-ML_SERVER_HOST = '127.0.0.1'
+# ML_SERVER_HOST = '127.0.0.1'
+ML_SERVER_HOST = '192.168.1.19'
 ML_SERVER_PORT = 5000
 
 
