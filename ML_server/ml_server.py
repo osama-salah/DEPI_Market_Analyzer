@@ -81,6 +81,7 @@ def process_request(request):
 
     product = data['product'][0]
     price = data['price'][0]
+    avg_rating = data['avg_rating'][0]
 
     return {
         "product": product,
@@ -88,7 +89,7 @@ def process_request(request):
         "pros": pros,
         "cons": cons,
         "summary": summary,
-        "avg_rating": data['ratings'].mean() if 'ratings' in data else None,
+        "avg_rating": avg_rating,
         "positive_reviews": positive_reviews,
         "negative_reviews": negative_reviews,
     }

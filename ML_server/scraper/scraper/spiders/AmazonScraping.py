@@ -26,8 +26,8 @@ class AmazonSpider(scrapy.Spider):
             return
 
         product = response.css('#productTitle::text').get()
+        avg_rating = response.css('span#acrPopover span.a-size-base.a-color-base::text').get().strip()
 
-        # price = response.css('span[aria-hidden="true"] > span.a-price-symbol::text, span[aria-hidden="true"] > span.a-price-whole::text').getall()
         price_parts = response.css(
             'span[aria-hidden="true"] > span.a-price-symbol::text, span[aria-hidden="true"] > span.a-price-whole::text'
         ).getall()[:2]
@@ -55,6 +55,7 @@ class AmazonSpider(scrapy.Spider):
                     helpful_votes = '1'
 
             items['product'] = product.strip() if product else None
+            items['avg_rating'] = avg_rating if avg_rating else None
             items['price'] = price.strip() if price else None
             items['review_body'] = review_body.strip() if review_body else None
 
@@ -63,6 +64,8 @@ class AmazonSpider(scrapy.Spider):
                 items['ratings'] = float(rating_number) if rating_number else None
             else:
                 items['ratings'] = None
+
+            items['avg_rating'] = float(avg_rating) if avg_rating else None
 
             items['helpful_votes'] = helpful_votes
 
