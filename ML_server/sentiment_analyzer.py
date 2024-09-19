@@ -1,3 +1,5 @@
+import json
+
 import google.generativeai as genai
 
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
@@ -100,7 +102,7 @@ def batch_inference_sentiment_roberta(reviews, model, tokenizer, batch_size=32):
     return np.array(all_predictions), np.array(all_probs)
 
 # Extract cons and pros from the top reviews
-def get_pros_cons   (reviews, n_top=10):
+def get_pros_cons(reviews, n_top=10):
     """
     get pros and cons from the top n reviews based on ratings or helpfulness.
 
@@ -121,24 +123,19 @@ def get_pros_cons   (reviews, n_top=10):
     combined_text = " ".join([review['review_body'] for _, review in top_reviews.iterrows()])
 
     model = genai.GenerativeModel("gemini-1.5-flash")
-    pros_cons = model.generate_content(f" \
-    Extract pros and cons from the following reviews. Be concise and ignore reviews that don't add pros and cons. Format your response using html using <li> tag: \
-    Pros:\
-    - Pros 1 \
-    - Pros 2 \
-    - Pros 3 \
-    ... \
-    Cons:\
-    - Cons 1 \
-    - Cons 2 \
-    - Cons 3 \
-    ... \
+    response = model.generate_content(f' \
     {combined_text} \
-    ")
+    Extract pros and cons, and create a one-line summary from these reviews. \
+    Be concise and ignore reviews that do not add pros and cons. \
+    Format your response as {{"pros":[PROS1,PROS2,PROS3],"cons":[CONS1,CONS2,CONS3],"summary":SUMMARY}} \
+    Do not add any other text except specified \
+   ')
 
-    print("Summarized Review:", pros_cons.text)
+    print("Summarized Review:", response.text)
 
-    return pros_cons.text
+    j_response = json.loads(response.text)
+
+    return j_response['pros'], j_response['cons'], j_response['summary']
 
 # ToDo: Receive scraped data as an argument
 def analyze_sentiment(data):
@@ -155,22 +152,23 @@ def analyze_sentiment(data):
     predicted_rating, probs = batch_inference_sentiment_roberta(data['review_body'][:10], model, tokenizer,
                                                                 batch_size=1)
 
-    result = data[['sentiment', 'review_body', 'helpful_votes']][:len(predicted_rating)].copy()
+    result = data[['review_body', 'helpful_votes']][:len(predicted_rating)].copy()
     result['predicted_rating'] = predicted_rating
 
-    # Result output
-    # Create a boolean mask for rows where sentiment doesn't equal predicted_rating
-    mismatch_mask = result['sentiment'] != result['predicted_rating']
-
-    # Use the mask to filter the DataFrame and print the desired columns
-    mismatches = result.loc[mismatch_mask, ['review_body', 'sentiment', 'predicted_rating']]
-
-    result.to_csv('result.csv')
-    mismatches.to_csv('mismatches.csv')
+    # This part is used for testing on a dataset
+    # # Result output
+    # # Create a boolean mask for rows where sentiment doesn't equal predicted_rating
+    # mismatch_mask = result['sentiment'] != result['predicted_rating']
+    #
+    # # Use the mask to filter the DataFrame and print the desired columns
+    # mismatches = result.loc[mismatch_mask, ['review_body', 'sentiment', 'predicted_rating']]
+    #
+    # result.to_csv('result.csv')
+    # mismatches.to_csv('mismatches.csv')
 
     # Clear large DataFrames
     del data
-    del mismatches
+    # del mismatches
 
     # Clear PyTorch model and move to CPU if it was on GPU
     model.cpu()

@@ -2,7 +2,7 @@ from typing import Any
 import re
 import scrapy
 from scrapy.http import Response
-from scraper.items import AmazonscrapItem
+from ..items import AmazonscrapItem
 
 
 class AmazonSpider(scrapy.Spider):
@@ -45,7 +45,7 @@ class AmazonSpider(scrapy.Spider):
             else:
                 items['ratings'] = None
 
-            items['helpful_counts'] = helpful_count
+            items['helpful_votes'] = helpful_count
 
             # Yield the item for each review
             yield items

@@ -13,6 +13,6 @@ class AmazonscrapItem(scrapy.Item):
     #Auther = scrapy.Field()
     price = scrapy.Field()
     reviews = scrapy.Field()
-    helpful_counts = scrapy.Field()
+    helpful_votes = scrapy.Field()
     ratings = scrapy.Field()
 
