@@ -149,8 +149,8 @@ def analyze_sentiment(data):
     model = model.to(device)
 
     # Perform inference
-    predicted_rating, probs = batch_inference_sentiment_roberta(data['review_body'][:10], model, tokenizer,
-                                                                batch_size=1)
+    predicted_rating, probs = batch_inference_sentiment_roberta(data['review_body'], model, tokenizer,
+                                                                batch_size=10)
 
     result = data[['review_body', 'helpful_votes']][:len(predicted_rating)].copy()
     result['predicted_rating'] = predicted_rating
