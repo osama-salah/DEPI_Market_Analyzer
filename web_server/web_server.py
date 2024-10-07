@@ -100,6 +100,9 @@ def price_prediction():
                 result['product_name'] = \
                 product_id_name_mapping[product_id_name_mapping['Item Code'] == product_id]['Item Name'].iloc[0]
 
+                result['optional_date'] = optional_date
+                if result['predicted_price']:
+                    result['predicted_price'] = round(result['predicted_price'], 2)
                 return render_template('price_prediction_result.html', result=result)
             except requests.RequestException as e:
                 return f"Error: {str(e)}", 500
