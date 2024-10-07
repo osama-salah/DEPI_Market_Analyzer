@@ -1,11 +1,7 @@
+from flask import Flask, request, jsonify
 import os
-import json
-import socket
-from queue import Queue
-from threading import Thread
 import pandas as pd
 import google.generativeai as genai
-from numpy.ma.core import product
 from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 from scrapy import signals
@@ -14,21 +10,22 @@ from scraper.scraper.spiders.AmazonScraping import AmazonSpider
 from sentiment_analyzer import analyze_sentiment, get_pros_cons, get_summary
 from multiprocessing import Process, Queue as MPQueue
 
+app = Flask(__name__)
 
 def run_spider(urls, results_queue):
     results = []
 
     def item_scraped(item, response, spider):
-        print(f"Item scraped: {item}")  # Add logging
+        print(f"Item scraped: {item}")
         results.append(item)
 
     def spider_closed(spider):
-        print(f"Spider closed. Total items scraped: {len(results)}")  # Add logging
+        print(f"Spider closed. Total items scraped: {len(results)}")
         df = pd.DataFrame(results)
         if df.empty:
-            print("Warning: DataFrame is empty!")  # Add warning
+            print("Warning: DataFrame is empty!")
         else:
-            print(f"DataFrame info:\n{df.info()}")  # Add DataFrame info logging
+            print(f"DataFrame info:\n{df.info()}")
         results_queue.put(df)
 
     process = CrawlerProcess(get_project_settings())
@@ -39,13 +36,11 @@ def run_spider(urls, results_queue):
         process.crawl(AmazonSpider, start_urls=urls)
         process.start()
     except Exception as e:
-        print(f"Error during crawling: {str(e)}")  # Add error logging
-        results_queue.put(pd.DataFrame())  # Put an empty DataFrame in case of error
-
+        print(f"Error during crawling: {str(e)}")
+        results_queue.put(pd.DataFrame())
 
 def spider_process(urls, results_queue):
     run_spider(urls, results_queue)
-
 
 def process_request(request):
     urls = [request]
@@ -58,13 +53,6 @@ def process_request(request):
 
     print(data.info())
     print(data.head(5))
-
-    if data.empty:
-        print("Warning: Scraped data is empty!")
-        return {
-            "product": request,
-            "error": "No data was scraped. Please check the URL and try again."
-        }
 
     if data.empty:
         print("Warning: Scraped data is empty!")
@@ -94,30 +82,15 @@ def process_request(request):
         "negative_reviews": negative_reviews,
     }
 
+@app.route('/analyze', methods=['POST'])
+def analyze():
+    data = request.json
+    url = data.get('url')
+    if not url:
+        return jsonify({"error": "No URL provided"}), 400
 
-def handle_client(client_socket):
-    request = client_socket.recv(1024).decode()
-    print(f"Received request: {request}")
-
-    result = process_request(request)
-
-    client_socket.send(json.dumps(result).encode())
-    client_socket.close()
-
-
-def start_server(host='0.0.0.0', port=5000):
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server.bind((host, port))
-    server.listen(5)
-    print(f"[*] Listening on {host}:{port}")
-
-    while True:
-        client, addr = server.accept()
-        print(f"[*] Accepted connection from {addr[0]}:{addr[1]}")
-        client_handler = Thread(target=handle_client, args=(client,))
-        client_handler.start()
-
+    result = process_request(url)
+    return jsonify(result)
 
 if __name__ == "__main__":
-    start_server()
+    app.run(host='0.0.0.0', port=5000, debug=True)

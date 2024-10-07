@@ -23,23 +23,23 @@
             font-weight: bold;
         }
     </style>
-    <a href="/price_prediction.html">Price Prediction</a>
+    <a href="/price_prediction">Price Prediction</a>
 </head>
 <body>
     <h1>Product Insights</h1>
-    <input type="text" id="productName" placeholder="Enter product name">
+    <input type="text" id="productURL" placeholder="Enter product name">
     <button onclick="getInsights()">Get Insights</button>
     <div id="result"></div>
 
     <script>
         async function getInsights() {
-            const productName = document.getElementById('productName').value;
+            const productURL = document.getElementById('productURL').value;
             const resultDiv = document.getElementById('result');
 
             resultDiv.innerHTML = 'Loading...';
 
             try {
-                const response = await axios.post('/get_insights', { product_name: productName });
+                const response = await axios.post('/get_insights', { product_url: productURL });
                 resultDiv.innerHTML = response.data;  // Now directly inserting HTML
             } catch (error) {
                 resultDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;

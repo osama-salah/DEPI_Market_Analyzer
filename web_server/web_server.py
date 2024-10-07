@@ -5,6 +5,8 @@ import pandas as pd
 app = Flask(__name__)
 
 PREDICTION_SERVER_URL = 'http://localhost:5002'
+ML_SERVER_HOST = 'localhost'  # Update this if your server is on a different host
+ML_SERVER_PORT = 5000
 
 product_id_name_mapping = pd.DataFrame()
 
@@ -28,7 +30,51 @@ def index():
 def get_products():
     return jsonify(products_data)
 
+# ----- Sentiment Analysis Part -----
+def get_insights(product_url):
+    try:
+        response = requests.post(f'http://{ML_SERVER_HOST}:{ML_SERVER_PORT}/analyze',
+                                 json={'url': product_url},
+                                 timeout=300)  # 5-minute timeout
+        response.raise_for_status()  # Raise an exception for bad status codes
+        data = response.json()
 
+        pros = "".join([f"<li>{p}</li>" for p in data['pros']])
+        pros_html_str = f"<ul>{pros}</ul>"
+        cons = "".join([f"<li>{c}</li>" for c in data['cons']])
+        cons_html_str = f"<ul>{cons}</ul>"
+
+        # Format the data as HTML
+        formatted_html = f"""
+        <h2>Insights for {data['product']}</h2>
+        <p>{data['summary']}</p>
+        <p>
+        <strong>Insights:</strong>
+        <p><strong>Price:</strong> {data['price']}</p>
+        <p><strong>Average rating:</strong> {data['avg_rating']}</p>
+        <p><strong>Positive reviews:</strong> {data['positive_reviews']}</p>
+        <p><strong>Negative reviews:</strong> {data['negative_reviews']}</p>
+        <p><strong>Pros:</strong>{pros_html_str}</p>
+        <p><strong>Cons:</strong>{cons_html_str}</p>
+        </p>
+        """
+        return formatted_html
+    except requests.ConnectionError:
+        return "<p class='error'>Unable to connect to ML server. Is it running?</p>"
+    except requests.Timeout:
+        return "<p class='error'>Request to ML server timed out. The analysis might be taking too long.</p>"
+    except requests.RequestException as e:
+        return f"<p class='error'>An error occurred while communicating with the ML server: {str(e)}</p>"
+    except Exception as e:
+        return f"<p class='error'>An unexpected error occurred: {str(e)}</p>"
+
+@app.route('/get_insights', methods=['POST'])
+def insights():
+    product_url = request.json['product_url']  # Changed from product_name to product_url
+    result = get_insights(product_url)
+    return result  # Returning HTML directly
+
+# -----Prediction part -----
 @app.route('/price_prediction', methods=['GET', 'POST'])
 def price_prediction():
     if request.method == 'POST':

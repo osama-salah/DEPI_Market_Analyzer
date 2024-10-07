@@ -1,3 +1,5 @@
+import logging
+
 from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
 import io
@@ -5,24 +7,25 @@ import pandas as pd
 import numpy as np
 from prophet import Prophet
 from concurrent.futures import ThreadPoolExecutor
+from serverutils.threading import get_optimal_worker_count
 import threading
 import uuid
 import os
-import psutil
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
 CORS(app)
 
 # Time to keep cached images
-CACHE_TIME = 30
+CACHE_TIME = 1
 
 # Thread-safe cache for storing prediction results
 cache = {}
 cache_lock = threading.Lock()
 
 # Thread pool for handling concurrent requests
-executor = ThreadPoolExecutor(max_workers=4)
+executor = ThreadPoolExecutor(max_workers=get_optimal_worker_count())
+logging.info(f"ThreadPoolExecutor initialized with {executor._max_workers} workers")
 
 # Data file and column mappings
 data_file_mapping = {
