@@ -9,7 +9,7 @@
     <h1>Price Prediction Result</h1>
     <p>Product: {{ result['product_name'] }}</p>
     <p>Predicted Price: {{ result.get('predicted_price', 'Price not available') }}</p>
-    <!-- Display the base64 image -->
-    <img src="data:image/png;base64,{{ result['prediction_image'] }}" alt="Price Prediction Plot" style="width:800px; height:600px;">
+    <!-- Display the image using the provided URL -->
+    <img src="{{ result['image_url'] }}" alt="Price Prediction Plot" style="width:800px; height:auto;">
 </body>
 </html>

@@ -42,18 +42,27 @@
 </head>
 <body>
     <h1>Product Price Prediction</h1>
+
+    <!-- Product dropdown -->
     <div class="dropdown-container">
         <input type="text" id="productName" placeholder="Enter product name" oninput="filterProducts()">
         <div id="dropdown" class="dropdown"></div>
     </div>
     <br>
+
+    <!-- Time period input -->
     <label for="timePeriod">Time Period (in days):</label>
     <input type="number" id="timePeriod" placeholder="Enter time period">
     <br><br>
+
+    <!-- Optional date input -->
     <label for="optionalDate">Optional Date (YYYY-MM-DD):</label>
     <input type="date" id="optionalDate">
     <br><br>
-    <button onclick="getPricePrediction()">Predict Price</button>
+
+    <!-- Buttons for prediction -->
+    <button onclick="predictPriceAtDate()">Predict Price at Specific Date</button>
+    <button onclick="predictPriceForPeriod()">Predict Price for Future Period</button>
     <div id="result"></div>
 
     <script>
@@ -100,10 +109,34 @@
             document.getElementById('dropdown').style.display = 'none';  // Hide dropdown
         }
 
-        async function getPricePrediction() {
+        // Function to predict price at a specific date
+        async function predictPriceAtDate() {
+            const resultDiv = document.getElementById('result');
+            const optionalDate = document.getElementById('optionalDate').value;
+
+            resultDiv.innerHTML = 'Loading...';
+
+            if (!selectedProductId || !optionalDate) {
+                resultDiv.innerHTML = `<p class="error">Please select a product and provide a valid date.</p>`;
+                return;
+            }
+
+            try {
+                const response = await axios.post('/price_prediction', {
+                    product_id: selectedProductId,
+                    time_period: null,  // Not sending time_period
+                    optional_date: optionalDate  // Send only date
+                });
+                resultDiv.innerHTML = response.data;
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+            }
+        }
+
+        // Function to predict price for a future period
+        async function predictPriceForPeriod() {
             const resultDiv = document.getElementById('result');
             const timePeriod = document.getElementById('timePeriod').value;
-            const optionalDate = document.getElementById('optionalDate').value;
 
             resultDiv.innerHTML = 'Loading...';
 
@@ -113,11 +146,10 @@
             }
 
             try {
-                // Use selected product ID, time period, and optional date for prediction
                 const response = await axios.post('/price_prediction', {
                     product_id: selectedProductId,
-                    time_period: timePeriod,
-                    optional_date: optionalDate || null  // Send null if optional date is not provided
+                    time_period: timePeriod,  // Send only time_period
+                    optional_date: null  // Not sending date
                 });
                 resultDiv.innerHTML = response.data;
             } catch (error) {
