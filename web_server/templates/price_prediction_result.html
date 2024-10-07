@@ -7,16 +7,19 @@
 </head>
 <body>
     <h1>Price Prediction Result</h1>
-    <p>Product: {{ result['product_name'] }}</p>
-{% if result.get('predicted_price') is not none %}
-    <p>
-        Predicted Price: <strong>{{ result.get('predicted_price') }}</strong>
-        {% if result.get('optional_date') is not none %}
-            at date: <strong>{{ result.get('optional_date') }}</strong>
+    <p>Predicted price graph for: {{ result['product_name'] }}</p>
+    {% if result.get('predicted_price') is not none %}
+        <p>Predicted Price: <strong>{{ result['predicted_price'] }}</strong></p>
+        {% if result.get('optional_date') %}
+            <p>at date: <strong>{{ result['optional_date'] }}</strong></p>
         {% endif %}
-    </p>
-{% endif %}
-    <!-- Display the image using the provided URL -->
-    <img src="{{ result['image_url'] }}" alt="Price Prediction Plot" style="width:800px; height:auto;">
+    {% endif %}
+    {% if result.get('error') %}
+        <p style="color: red;">Error: {{ result['error'] }}</p>
+    {% else %}
+        <img src="{{ result['image_url'] }}" alt="Price Prediction Plot" style="width:800px; height:auto;">
+    {% endif %}
+    <br>
+    <a href="{{ url_for('price_prediction') }}">Make another price prediction</a>
 </body>
 </html>
