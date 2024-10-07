@@ -5,8 +5,7 @@ import pandas as pd
 app = Flask(__name__)
 
 PREDICTION_SERVER_URL = 'http://localhost:5002'
-ML_SERVER_HOST = 'localhost'  # Update this if your server is on a different host
-ML_SERVER_PORT = 5000
+SENTIMENT_SERVER_URL = 'http://localhost:5000'
 
 product_id_name_mapping = pd.DataFrame()
 
@@ -33,7 +32,7 @@ def get_products():
 # ----- Sentiment Analysis Part -----
 def get_insights(product_url):
     try:
-        response = requests.post(f'http://{ML_SERVER_HOST}:{ML_SERVER_PORT}/analyze',
+        response = requests.post(f'{SENTIMENT_SERVER_URL}/analyze',
                                  json={'url': product_url},
                                  timeout=300)  # 5-minute timeout
         response.raise_for_status()  # Raise an exception for bad status codes
@@ -79,11 +78,11 @@ def insights():
 def price_prediction():
     if request.method == 'POST':
         data = request.json
-        product_id = data.get('product_id')
-        time_period = data.get('time_period')
-        optional_date = data.get('optional_date')
+        product_id = data.get('product_id', None)
+        time_period = data.get('time_period', None)
+        optional_date = data.get('optional_date', None)
 
-        if product_id and time_period:
+        if product_id and (time_period or optional_date):
             try:
                 # Make a request to the prediction server
                 response = requests.post(f'{PREDICTION_SERVER_URL}/predict', json={

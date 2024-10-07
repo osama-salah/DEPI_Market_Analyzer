@@ -43,3 +43,6 @@ Thumbs.db
 
 # Output files
 *.csv
+
+# Cache files
+temp*

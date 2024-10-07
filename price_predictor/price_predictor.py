@@ -47,6 +47,10 @@ def load_data(data_name='super_market_sales'):
 
 def run_predictor(product_id, time_period, optional_date):
     data = load_data('super_market_sales')
+
+    if time_period:
+        time_period = int(time_period)
+
     item_data = data[data['Item Code'] == product_id]
     item_data.loc[:, 'ds'] = np.array(item_data['ds'])
 
@@ -54,12 +58,16 @@ def run_predictor(product_id, time_period, optional_date):
     model.add_seasonality(name='yearly', period=365.25, fourier_order=9)
     model.fit(item_data[['ds', 'y']])
 
-    future = model.make_future_dataframe(periods=int(time_period))
+    if optional_date:
+        time_period = pd.to_datetime(optional_date) - item_data['ds'].max()
+        time_period = time_period.days
+
+    future = model.make_future_dataframe(periods=time_period)
     forecast = model.predict(future)
 
     predicted_price = None
     if optional_date:
-        predicted_price = forecast[forecast['ds'] == pd.to_datetime(optional_date)]['yhat'].iloc[0]
+        predicted_price = forecast[forecast['ds'] == optional_date]['yhat'].iloc[-1]
 
     fig = model.plot(forecast)
     img = io.BytesIO()
