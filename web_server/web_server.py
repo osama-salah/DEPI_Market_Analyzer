@@ -62,44 +62,46 @@ def get_insights(product_url):
     try:
         response = requests.post(f'{SENTIMENT_SERVER_URL}/analyze',
                                  json={'url': product_url},
-                                 timeout=300)  # 5-minute timeout
-        response.raise_for_status()  # Raise an exception for bad status codes
+                                 timeout=300)
+        response.raise_for_status()
         data = response.json()
 
-        pros = "".join([f"<li>{p}</li>" for p in data['pros']])
-        pros_html_str = f"<ul>{pros}</ul>"
-        cons = "".join([f"<li>{c}</li>" for c in data['cons']])
-        cons_html_str = f"<ul>{cons}</ul>"
+        # Format star rating
+        full_stars = int(data['avg_rating'])
+        half_star = (data['avg_rating'] - full_stars) >= 0.5
+        empty_stars = 5 - full_stars - (1 if half_star else 0)
 
-        # Format the data as HTML
-        formatted_html = f"""
-        <h2>Insights for {data['product']}</h2>
-        <p>{data['summary']}</p>
-        <p>
-        <strong>Insights:</strong>
-        <p><strong>Price:</strong> {data['price']}</p>
-        <p><strong>Average rating:</strong> {data['avg_rating']}</p>
-        <p><strong>Positive reviews:</strong> {data['positive_reviews']}</p>
-        <p><strong>Negative reviews:</strong> {data['negative_reviews']}</p>
-        <p><strong>Pros:</strong>{pros_html_str}</p>
-        <p><strong>Cons:</strong>{cons_html_str}</p>
-        </p>
-        """
-        return formatted_html
+        star_html = '★' * full_stars
+        if half_star:
+            star_html += '½'
+        star_html += '☆' * empty_stars
+
+        return {
+            "product_name": data['product'],
+            "price": data['price'],
+            "image_url": data.get('image_url', '/static/placeholder.jpg'),
+            "review": data['summary'],
+            "pros": data['pros'],
+            "cons": data['cons'],
+            "rating": data['avg_rating'],
+            "star_rating": star_html,
+            "positive_reviews": data['positive_reviews'],
+            "negative_reviews": data['negative_reviews']
+        }
     except requests.ConnectionError:
-        return "<p class='error'>Unable to connect to ML server. Is it running?</p>"
+        return {"error": "Unable to connect to ML server. Is it running?"}
     except requests.Timeout:
-        return "<p class='error'>Request to ML server timed out. The analysis might be taking too long.</p>"
+        return {"error": "Request to ML server timed out. The analysis might be taking too long."}
     except requests.RequestException as e:
-        return f"<p class='error'>An error occurred while communicating with the ML server: {str(e)}</p>"
+        return {"error": f"An error occurred while communicating with the ML server: {str(e)}"}
     except Exception as e:
-        return f"<p class='error'>An unexpected error occurred: {str(e)}</p>"
+        return {"error": f"An unexpected error occurred: {str(e)}"}
 
 @app.route('/get_insights', methods=['POST'])
 def insights():
-    product_url = request.json['product_url']  # Changed from product_name to product_url
+    product_url = request.json['product_url']
     result = get_insights(product_url)
-    return result  # Returning HTML directly
+    return jsonify(result)
 
 # -----Prediction part -----
 def get_prediction(endpoint, data, template):

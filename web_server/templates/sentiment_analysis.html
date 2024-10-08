@@ -1,53 +1,100 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Insights</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        #result {
-            margin-top: 20px;
-            border: 1px solid #ddd;
-            padding: 15px;
-            border-radius: 5px;
-        }
-        .error {
-            color: red;
-            font-weight: bold;
-        }
-    </style>
-    <a href="/">Home</a>
-    <a href="/price_prediction">Price Prediction</a>
-    <a href="/demand_prediction">Demand Prediction</a>
-    <a href="/sentiment_analysis">Sentiment Analysis</a>
-</head>
-<body>
-    <h1>Product Insights</h1>
-    <input type="text" id="productURL" placeholder="Enter product name">
-    <button onclick="getInsights()">Get Insights</button>
+{% extends "base.html" %}
+
+{% block title %}Product Insights{% endblock %}
+
+{% block content %}
+    <h1>🔍 Product Insights</h1>
+    <p>Get detailed insights into any product instantly by entering the product URL below.</p>
+
+    <form id="product-form">
+        <input type="text" id="product-url" name="product_url" placeholder="Enter Product URL" required>
+        <button type="submit">Get Insights</button>
+    </form>
+
+    <div id="progress-bar">
+        <div id="progress"></div>
+    </div>
+
     <div id="result"></div>
-
+{% endblock %}
+{% block scripts %}
     <script>
-        async function getInsights() {
-            const productURL = document.getElementById('productURL').value;
-            const resultDiv = document.getElementById('result');
+        $(document).ready(function() {
+            $('#product-form').on('submit', function(e) {
+                e.preventDefault();
+                var productUrl = $('#product-url').val();
+                if (productUrl) {
+                    $('#progress-bar').show();
+                    var width = 0;
+                    var interval = setInterval(function() {
+                        if (width >= 100) {
+                            clearInterval(interval);
+                            $('#progress-bar').hide();
+                        } else {
+                            width++;
+                            $('#progress').width(width + '%');
+                            $('#progress').html(width + '%');
+                        }
+                    }, 20);
 
-            resultDiv.innerHTML = 'Loading...';
+                    $.ajax({
+                        url: '/get_insights',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({product_url: productUrl}),
+                        success: function(response) {
+                            clearInterval(interval);
+                            $('#progress-bar').hide();
+                            displayInsights(response);
+                        },
+                        error: function() {
+                            clearInterval(interval);
+                            $('#progress-bar').hide();
+                            $('#result').html('<p style="color: red;">Error fetching product details.</p>');
+                        }
+                    });
+                } else {
+                    $('#result').html('<p style="color: red;">Please enter a valid product URL.</p>');
+                }
+            });
 
-            try {
-                const response = await axios.post('/get_insights', { product_url: productURL });
-                resultDiv.innerHTML = response.data;  // Now directly inserting HTML
-            } catch (error) {
-                resultDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+            function displayInsights(data) {
+                if (data.error) {
+                    $('#result').html('<p style="color: red;">' + data.error + '</p>');
+                    return;
+                }
+
+                var html = `
+                    <h2>Insights: ${data.product_name}</h2>
+                    <img src="${data.image_url}" alt="${data.product_name}">
+                    <h3>Price: ${data.price}</h3>
+                    <h3>Product Review</h3>
+                    <div class="review">${data.review}</div>
+                    <h3>Product Rating</h3>
+                    <div class="star-container">
+                        <span class="star">${data.star_rating}</span>
+                        <span class="rating-text">(${data.rating.toFixed(1)})</span>
+                    </div>
+                    <p>Positive reviews: ${data.positive_reviews}</p>
+                    <p>Negative reviews: ${data.negative_reviews}</p>
+                    <div class="pros-cons">
+                        <div class="pros">
+                            <h3>Pros ✅</h3>
+                            <ul>
+                                ${data.pros.map(pro => `<li>${pro}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="cons">
+                            <h3>Cons ❌</h3>
+                            <ul>
+                                ${data.cons.map(con => `<li>${con}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+
+                $('#result').html(html);
             }
-        }
+        });
     </script>
-</body>
-</html>
+{% endblock %}
