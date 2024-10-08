@@ -1,34 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Insights</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        #result {
-            margin-top: 20px;
-            border: 1px solid #ddd;
-            padding: 15px;
-            border-radius: 5px;
-        }
-        .error {
-            color: red;
-            font-weight: bold;
-        }
-    </style>
-    <a href="/">Home</a>
-    <a href="/price_prediction">Price Prediction</a>
-    <a href="/demand_prediction">Demand Prediction</a>
-    <a href="/sentiment_analysis">Sentiment Analysis</a>
-</head>
-<body>
-    <h1>Welcome to AI Market Analyzer</h1>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Welcome to AI Market Analyzer{% endblock %}
+
+{% block content %}
+<h1>Welcome to AI Market Analyzer</h1>
+<p>Explore our advanced tools for market analysis:</p>
+<ul>
+    <li><a href="{{ url_for('price_prediction') }}">Price Prediction</a>: Forecast product prices</li>
+    <li><a href="{{ url_for('demand_prediction') }}">Demand Prediction</a>: Estimate future product demand</li>
+    <li><a href="{{ url_for('sentiment_analysis') }}">Product Insights</a>: Analyze product sentiment and reviews</li>
+</ul>
+{% endblock %}
