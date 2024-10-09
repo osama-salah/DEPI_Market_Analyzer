@@ -1,170 +1,98 @@
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            text-align: center;
-        }
-        h1, h2, h3 {
-            animation: fadeIn 1.5s;
-        }
-        p {
-            animation: fadeInUp 1.5s;
-        }
-
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 15px 32px;
-            font-size: 16px;
-            margin: 10px 2px;
-            border: none;
-            transition: 0.4s;
-            border-radius: 12px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-            box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.3);
-        }
-        #progress-bar {
-            width: 100%;
-            background-color: #ddd;
-            display: none;
-        }
-        #progress {
-            width: 0%;
-            height: 30px;
-            background-color: #4CAF50;
-            text-align: center;
-            line-height: 30px;
-            color: white;
-        }
-        img {
-            max-width: 300px;
-            border-radius: 12px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            transition: 0.3s ease-in-out;
-        }
-        img:hover {
-            transform: scale(1.05);
-        }
-        .review {
-            animation: fadeInUp 2s;
-            text-align: left;
-            margin: 20px 0;
-        }
-        .star-container {
-            display: inline-block;
-            font-size: 24px;
-            position: relative;
-            margin-bottom: 10px;
-        }
-        .star {
-            color: #FFD700;
-            font-size: 30px;
-        }
-        .rating-text {
-            font-size: 20px;
-            padding-left: 10px;
-        }
-        .pros-cons {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-        }
-        .pros, .cons {
-            width: 45%;
-            animation: fadeInLeft 1.5s;
-        }
-        .cons {
-            animation: fadeInRight 1.5s;
-        }
-        ul {
-            list-style-type: none;
-            padding: 0;
-            text-align: left;
-        }
-        li {
-            padding: 5px 0;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        @keyframes fadeInUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        @keyframes fadeInLeft {
-            from { transform: translateX(-20px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes fadeInRight {
-            from { transform: translateX(20px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-nav {
-    background-color: #333;
-    padding: 10px 0;
+/* Button Animation */
+.stButton button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 15px 32px;
+    font-size: 16px;
+    margin: 10px 2px;
+    border: none;
+    transition: 0.4s;
+    border-radius: 12px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
 }
 
-nav ul {
+.stButton button:hover {
+    background-color: #45a049;
+    box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Progress bar color */
+.stProgress .st-bo {
+    background-color: #4CAF50;
+}
+
+/* Image Hover Effect */
+.stImage img {
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: 0.3s ease-in-out;
+}
+
+.stImage img:hover {
+    transform: scale(1.05);
+}
+
+/* Star Rating Styling */
+.star-container {
+    display: inline-block;
+    font-size: 24px;
+    position: relative;
+    margin-bottom: 10px;
+}
+.star {
+    color: #FFD700;
+    font-size: 30px;
+    display: inline-block;
+    position: relative;
+}
+.half {
+    background: linear-gradient(90deg, #FFD700 50%, #ddd 50%);
+    -webkit-background-clip: text;
+    color: transparent;
+    display: inline-block;
+}
+.full, .empty {
+    color: #FFD700;
+}
+.empty {
+    color: #ddd;
+}
+.rating-text {
+    font-size: 20px;
+    padding-left: 10px;
+}
+
+/* Text animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeInLeft {
+    from { transform: translateX(-20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeInRight {
+    from { transform: translateX(20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Center Text */
+h1, h2, h3 {
+    text-align: center;
+}
+
+ul {
     list-style-type: none;
     padding: 0;
-    display: flex;
-    justify-content: center;
 }
 
-nav ul li {
-    margin: 0 10px;
-}
-
-nav ul li a {
-    color: white;
-    text-decoration: none;
-}
-
-form {
-    margin-bottom: 20px;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-label {
-    display: block;
-    margin-bottom: 5px;
-}
-
-input[type="text"],
-input[type="number"],
-input[type="date"],
-select {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-#progress-container {
-    margin-top: 20px;
-}
-
-
-#progress-text {
-    margin-top: 5px;
-}
-
-.error {
-    color: #e74c3c;
-}
-
-footer {
-    margin-top: 40px;
-    text-align: center;
-    color: #7f8c8d;
+li {
+    padding: 5px 0;
 }
