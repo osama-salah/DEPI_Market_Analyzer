@@ -42,7 +42,7 @@ Thumbs.db
 .directory
 
 # Output files
-*.csv
+# *.csv
 
 # Cache files
 temp_*
