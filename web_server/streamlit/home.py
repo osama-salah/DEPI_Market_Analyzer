@@ -1,5 +1,5 @@
 import streamlit as st
-from streamlit_app import prediction_form
+from predictors import prediction_form
 from page_template import header, footer
 from sentiment_analyzer import sentiment_analyzer_form
 
