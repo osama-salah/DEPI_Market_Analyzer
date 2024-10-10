@@ -1,6 +1,5 @@
 import requests
 import streamlit as st
-from streamlit import rerun, session_state
 
 SENTIMENT_SERVER_URL = 'http://localhost:5000'
 
@@ -76,7 +75,6 @@ def sentiment_analyzer_form():
             if not rerun_flag:
                 st.session_state.processing = True
                 rerun_flag = True
-                print('rerun flag: ', rerun_flag)
                 st.rerun()
             # Progress bar with percentage
             # with st.spinner('Fetching product details...'):

@@ -3,7 +3,7 @@ import requests
 
 # Function to display the prediction result
 def display_result(result):
-    st.title(f"Price Prediction Result for: {result['product']}")
+    st.title(f"Price Prediction Result for: {result['product_name']}")
 
     # Display predicted price if available
     if result.get('predicted_price') is not None:
