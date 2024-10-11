@@ -1,4 +1,6 @@
-from flask import Flask, request, jsonify
+import json
+
+from flask import Flask, request, jsonify, Response
 import os
 import pandas as pd
 import google.generativeai as genai
@@ -46,23 +48,34 @@ def process_request(request):
     urls = [request]
     results_queue = MPQueue()
 
+    # Launch a process for web scraping or data extraction
     p = Process(target=spider_process, args=(urls, results_queue))
     p.start()
     data = results_queue.get()
     p.join()
 
-    print(data.info())
-    print(data.head(5))
-
     if data.empty:
-        print("Warning: Scraped data is empty!")
         return {
             "product": request,
             "error": "No data was scraped. Please check the URL and try again."
         }
 
-    sentiment_result = analyze_sentiment(data)
+    # Analyze the sentiment and get progress updates
+    sentiment_result = None
+    for progress_update in analyze_sentiment(data):
+        progress_data = json.loads(progress_update)
+
+        if 'result' in progress_data:
+            sentiment_result = progress_data['result']
+        else:
+            yield progress_update  # Yield progress
+
+    # Further processing using GENAI
     genai.configure(api_key=os.environ['GENAI_API_KEY'])
+
+    sentiment_result = json.loads(sentiment_result)
+    sentiment_result = pd.DataFrame(sentiment_result)
+
     pros, cons, summary = get_pros_cons(sentiment_result)
     positive_reviews = sum(sentiment_result['predicted_rating'] == 1)
     negative_reviews = sum(sentiment_result['predicted_rating'] == 0)
@@ -71,7 +84,8 @@ def process_request(request):
     price = data['price'][0]
     avg_rating = data['avg_rating'][0]
 
-    return {
+    # Yield final output as JSON
+    yield json.dumps({'result': {
         "product": product,
         "price": price,
         "pros": pros,
@@ -79,8 +93,8 @@ def process_request(request):
         "summary": summary,
         "avg_rating": avg_rating,
         "positive_reviews": positive_reviews,
-        "negative_reviews": negative_reviews,
-    }
+        "negative_reviews": negative_reviews
+    }})
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
@@ -89,8 +103,13 @@ def analyze():
     if not url:
         return jsonify({"error": "No URL provided"}), 400
 
-    result = process_request(url)
-    return jsonify(result)
+    def generate():
+        for progress_update in process_request(url):
+            yield f"{progress_update}\n"  # Stream each progress update back to the client
+
+    # This response will stream progress updates back to the client
+    return Response(generate(), mimetype='application/json')
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

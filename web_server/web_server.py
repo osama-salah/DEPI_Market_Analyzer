@@ -9,6 +9,7 @@ SENTIMENT_SERVER_URL = 'http://localhost:5000'
 
 product_id_name_mapping = pd.DataFrame()
 
+
 def load_products():
     global product_id_name_mapping
     product_id_name_mapping = pd.read_csv('static/data/annex4.csv')

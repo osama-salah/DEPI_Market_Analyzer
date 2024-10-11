@@ -85,7 +85,8 @@ def batch_inference_sentiment_roberta(reviews, model, tokenizer, batch_size=32):
     # Perform inference
     model.eval()
     with torch.no_grad():
-        # Wrap the dataloader with tqdm for a progress bar
+        total_batches = len(dataloader)
+        i = 0
         for batch in tqdm(dataloader, desc="Inferring sentiments..."):
             input_ids, attention_mask = batch
             outputs = model(input_ids, attention_mask=attention_mask)
@@ -99,7 +100,15 @@ def batch_inference_sentiment_roberta(reviews, model, tokenizer, batch_size=32):
             probs = F.softmax(logits, dim=-1)
             all_probs.extend(probs.cpu().numpy())
 
-    return np.array(all_predictions), np.array(all_probs)
+            # Yield progress
+            yield json.dumps({"progress": int((i / total_batches) * 100)})
+            i += 1
+
+    # Yield the final result with predictions and probabilities
+    yield json.dumps({
+        'all_predictions': np.array(all_predictions).tolist(),
+        'all_probs': np.array(all_probs).tolist()
+    })
 
 # Extract cons and pros from the top reviews
 def get_pros_cons(reviews, n_top=10):
@@ -128,7 +137,7 @@ def get_pros_cons(reviews, n_top=10):
     Extract pros and cons, and create a one-line summary from these reviews. \
     Be concise and ignore reviews that do not add pros and cons. \
     Format your response as {{"pros":[PROS1,PROS2,PROS3],"cons":[CONS1,CONS2,CONS3],"summary":SUMMARY}} \
-    Do not add any other text except specified \
+    Do not add any other text except specified. Do not add any format specifiers\
    ')
 
     print("Summarized Review:", response.text)
@@ -137,10 +146,10 @@ def get_pros_cons(reviews, n_top=10):
 
     return j_response['pros'], j_response['cons'], j_response['summary']
 
-# ToDo: Receive scraped data as an argument
 def analyze_sentiment(data):
     model_name = "siebert/sentiment-roberta-large-english"
 
+    # Load tokenizer and model
     tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
     model = AutoModelForSequenceClassification.from_pretrained(model_name)
 
@@ -148,34 +157,31 @@ def analyze_sentiment(data):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
 
-    # Perform inference
-    predicted_rating, probs = batch_inference_sentiment_roberta(data['review_body'], model, tokenizer,
-                                                                batch_size=2)
+    predicted_rating = None
+    probs = None
 
+    # Process the progress and final result
+    for progress_update in batch_inference_sentiment_roberta(data['review_body'], model, tokenizer, batch_size=2):
+        progress_data = json.loads(progress_update)
+
+        if 'all_predictions' in progress_data:
+            predicted_rating = np.array(progress_data['all_predictions'])  # Store the final result
+            probs = np.array(progress_data['all_probs'])
+        else:
+            yield progress_update  # Yield progress if not final result
+
+    # Process the result and attach predictions
     result = data[['review_body', 'helpful_votes']][:len(predicted_rating)].copy()
     result['predicted_rating'] = predicted_rating
 
-    # This part is used for testing on a dataset
-    # # Result output
-    # # Create a boolean mask for rows where sentiment doesn't equal predicted_rating
-    # mismatch_mask = result['sentiment'] != result['predicted_rating']
-    #
-    # # Use the mask to filter the DataFrame and print the desired columns
-    # mismatches = result.loc[mismatch_mask, ['review_body', 'sentiment', 'predicted_rating']]
-    #
-    # result.to_csv('result.csv')
-    # mismatches.to_csv('mismatches.csv')
-
-    # Clear large DataFrames
+    # Cleanup
     del data
-    # del mismatches
-
-    # Clear PyTorch model and move to CPU if it was on GPU
     model.cpu()
     del model
     del tokenizer
 
-    return result
+    # Yield the final result
+    yield json.dumps({'result': result.to_json(orient='records')})
 
 
 def get_summary(description):

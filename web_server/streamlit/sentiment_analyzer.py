@@ -1,3 +1,5 @@
+import json
+
 import requests
 import streamlit as st
 
@@ -62,63 +64,57 @@ except NameError:
 
 def sentiment_analyzer_form():
     global rerun_flag
-    # Title and page setup
     st.markdown('<h1 style="text-align: center; animation: fadeIn 1.5s;">🔍 Product Insights</h1>', unsafe_allow_html=True)
     st.write('<p style="text-align: center; animation: fadeInUp 1.5s;">Get detailed insights into any product instantly by entering the product URL below.</p>', unsafe_allow_html=True)
 
     # Input for product URL
     product_url = st.text_input("Enter Product URL", "")
 
-    # Button to trigger the analysis
     if st.button("Get Insights") or rerun_flag:
         if product_url or rerun_flag:
             if not rerun_flag:
                 st.session_state.processing = True
                 rerun_flag = True
                 st.rerun()
-            # Progress bar with percentage
-            # with st.spinner('Fetching product details...'):
-            #     progress_bar = st.progress(0)
-            #     status_text = st.empty()
-                # for percent_complete in range(100):
-                #     time.sleep(0.02)
-                #     progress_bar.progress(percent_complete + 1)
-                #     status_text.text(f"Loading... {percent_complete + 1}%")
 
-            # Fetch product details (replace this with real logic to scrape/analyze product)
+            # Progress bar and status text
             if rerun_flag:
-                response = requests.post(f'{SENTIMENT_SERVER_URL}/analyze', json={
-                    'url': product_url,
-                })
+                st.session_state['progress'] = 0
+                progress_bar = st.progress(0)
+                status_text = st.empty()
 
-                if response.status_code == 200:
-                    st.session_state.result = response.json()  # Store the result in session state
+                try:
+                    # Stream progress from the server
+                    with requests.post(f'{SENTIMENT_SERVER_URL}/analyze', json={'url': product_url}, stream=True) as response:
+                        for line in response.iter_lines():
+                            if line:
+                                progress_data = json.loads(line.decode('utf-8'))
 
-                    # Format star rating
-                    full_stars = int(st.session_state.result['avg_rating'])
-                    half_star = (st.session_state.result['avg_rating'] - full_stars) >= 0.5
-                    empty_stars = 5 - full_stars - (1 if half_star else 0)
+                                # Check if progress update or final result
+                                progress = progress_data.get("progress")
+                                if progress is not None:
+                                    progress_bar.progress(progress)
+                                    status_text.text(f"Loading... {progress}%")
 
-                    star_html = '★' * full_stars
-                    if half_star:
-                        star_html += '½'
-                    star_html += '☆' * empty_stars
+                                # If final result
+                                if "result" in progress_data:
+                                    st.session_state.result = progress_data['result']
+                                    break  # Stop the loop once final result is received
 
-                    # st.session_state.result['image_url'] = st.session_state.result.get('image_url', '/static/placeholder.jpg')
+                    if response.status_code == 200:
+                        rerun_flag = False
+                        st.session_state.processing = False
+                        st.rerun()  # Re-run Streamlit to show the result
+                    else:
+                        st.error(f'Failed to get prediction: {response.status_code}')
 
-                    st.session_state.processing = False
-                    rerun_flag = False
-                    print('rerun flag: ', rerun_flag)
-                    st.rerun()  # Rerun to display result in a new function
-                else:
-                    st.error(f'response status: {response.status_code}')
-                    st.error(f'response: {response}')
-                    st.error("Failed to get prediction")
+                except Exception as e:
+                    st.error(f"An error occurred: {str(e)}")
         else:
             st.error("Please enter a valid product URL.")
 
     # Display the result if it exists in session state
     if 'result' in st.session_state:
-        display_result(st.session_state.result)  # Call the display function
+        display_result(st.session_state.result)
 
     st.session_state.is_running = False  # Re-enable the navigation once done
