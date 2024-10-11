@@ -74,9 +74,9 @@ def sentiment_analyzer_form():
     st.write('<p style="text-align: center; animation: fadeInUp 1.5s;">Get detailed insights into any product instantly by entering the product URL below.</p>', unsafe_allow_html=True)
 
     # Input for product URL
-    product_url = st.text_input("Enter Product URL", "")
+    product_url = st.text_input("Enter Product URL", "", disabled=st.session_state.processing)
 
-    if st.button("Get Insights") or rerun_flag:
+    if st.button("Get Insights", disabled=st.session_state.processing) or rerun_flag:
         if product_url or rerun_flag:
             if not rerun_flag:
                 st.session_state.processing = True
@@ -86,8 +86,6 @@ def sentiment_analyzer_form():
             # Progress bar and status text
             if rerun_flag:
                 st.session_state['progress'] = 0
-                # progress_bar = st.progress(0)
-                # status_text = st.empty()
 
                 try:
                     # Stream progress from the server
