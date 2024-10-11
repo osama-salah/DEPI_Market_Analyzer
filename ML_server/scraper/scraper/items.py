@@ -16,4 +16,5 @@ class AmazonscrapItem(scrapy.Item):
     review_body = scrapy.Field()
     helpful_votes = scrapy.Field()
     ratings = scrapy.Field()
+    image_url = scrapy.Field()
 

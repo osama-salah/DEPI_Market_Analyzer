@@ -83,6 +83,7 @@ def process_request(request):
     product = data['product'][0]
     price = data['price'][0]
     avg_rating = data['avg_rating'][0]
+    image_url = data['image_url'][0]
 
     # Yield final output as JSON
     yield json.dumps({'result': {
@@ -93,7 +94,8 @@ def process_request(request):
         "summary": summary,
         "avg_rating": avg_rating,
         "positive_reviews": positive_reviews,
-        "negative_reviews": negative_reviews
+        "negative_reviews": negative_reviews,
+        "image_url": image_url,
     }})
 
 @app.route('/analyze', methods=['POST'])

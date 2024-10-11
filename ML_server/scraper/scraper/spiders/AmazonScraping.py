@@ -28,6 +28,8 @@ class AmazonSpider(scrapy.Spider):
         product = response.css('#productTitle::text').get()
         avg_rating = response.css('span#acrPopover span.a-size-base.a-color-base::text').get().strip()
 
+        image_url = response.css('img.a-dynamic-image::attr(src)').get()
+
         price_parts = response.css(
             'span[aria-hidden="true"] > span.a-price-symbol::text, span[aria-hidden="true"] > span.a-price-whole::text'
         ).getall()[:2]
@@ -58,6 +60,7 @@ class AmazonSpider(scrapy.Spider):
             items['avg_rating'] = avg_rating if avg_rating else None
             items['price'] = price.strip() if price else None
             items['review_body'] = review_body.strip() if review_body else None
+            items['image_url'] = image_url.strip() if price else None
 
             if review_rating:
                 rating_number = self.extract_rating_number(review_rating)

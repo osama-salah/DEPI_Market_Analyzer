@@ -25,7 +25,14 @@ def display_result(result):
     st.markdown(f'<h2 style="text-align: center; animation: fadeIn 2s;">Insights: {result["product"]}</h2>',
                 unsafe_allow_html=True)
 
-    # # Display product image with hover effect (with smaller size)
+    # Display product image with hover effect (with smaller size)
+    st.markdown(f"""
+        <div style="text-align: center;">
+            <a href="{result["product_url"]}" target="_blank">
+                <img src="{result["image_url"]}" alt="Product Image" style="width:300px;"/>
+            </a>
+        </div>
+    """, unsafe_allow_html=True)
     # st.image(result['image_url'], caption="Product Image", use_column_width=False, width=300)
 
     # Display product price after the image
@@ -99,6 +106,7 @@ def sentiment_analyzer_form():
                                 # If final result
                                 if "result" in progress_data:
                                     st.session_state.result = progress_data['result']
+                                    st.session_state.result['product_url'] = product_url
                                     break  # Stop the loop once final result is received
 
                     if response.status_code == 200:
