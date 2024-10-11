@@ -33,7 +33,6 @@ def display_result(result):
             </a>
         </div>
     """, unsafe_allow_html=True)
-    # st.image(result['image_url'], caption="Product Image", use_column_width=False, width=300)
 
     # Display product price after the image
     st.markdown(f'<h3 style="text-align: center; animation: fadeIn 2s;">Price: {result["price"]}</h3>',
@@ -87,27 +86,31 @@ def sentiment_analyzer_form():
             # Progress bar and status text
             if rerun_flag:
                 st.session_state['progress'] = 0
-                progress_bar = st.progress(0)
-                status_text = st.empty()
+                # progress_bar = st.progress(0)
+                # status_text = st.empty()
 
                 try:
                     # Stream progress from the server
-                    with requests.post(f'{SENTIMENT_SERVER_URL}/analyze', json={'url': product_url}, stream=True) as response:
-                        for line in response.iter_lines():
-                            if line:
-                                progress_data = json.loads(line.decode('utf-8'))
+                    with st.spinner('Fetching product details...'):
+                        progress_bar = st.progress(0)
+                        status_text = st.empty()
+                        with requests.post(f'{SENTIMENT_SERVER_URL}/analyze', json={'url': product_url}, stream=True) as response:
+                            for line in response.iter_lines():
+                                if line:
+                                    progress_data = json.loads(line.decode('utf-8'))
 
-                                # Check if progress update or final result
-                                progress = progress_data.get("progress")
-                                if progress is not None:
-                                    progress_bar.progress(progress)
-                                    status_text.text(f"Loading... {progress}%")
+                                    # Check if progress update or final result
+                                    progress = progress_data.get("progress")
 
-                                # If final result
-                                if "result" in progress_data:
-                                    st.session_state.result = progress_data['result']
-                                    st.session_state.result['product_url'] = product_url
-                                    break  # Stop the loop once final result is received
+                                    if progress is not None:
+                                        progress_bar.progress(progress)
+                                        status_text.text(f"Loading... {progress}%")
+
+                                    # If final result
+                                    if "result" in progress_data:
+                                        st.session_state.result = progress_data['result']
+                                        st.session_state.result['product_url'] = product_url
+                                        break  # Stop the loop once final result is received
 
                     if response.status_code == 200:
                         rerun_flag = False
