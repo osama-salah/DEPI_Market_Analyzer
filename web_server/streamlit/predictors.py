@@ -1,6 +1,8 @@
 import streamlit as st
 import requests
 
+PREDICTION_SERVER_URL = 'http://localhost:5001'
+
 # Function to display the prediction result
 def display_result(result):
     st.title(f"Price Prediction Result for: {result['product_name']}")
@@ -32,7 +34,7 @@ def prediction_form(prediction_type):
     st.title(f'Product {prediction_type} Prediction')
 
     # Get the list of products
-    response = requests.get('http://localhost:5001/get_products')
+    response = requests.get(f'{PREDICTION_SERVER_URL}/get_products')
     products = response.json()
 
     # Dropdown for product selection
@@ -49,7 +51,7 @@ def prediction_form(prediction_type):
     if st.button(f'Predict {prediction_type} at Specific Date'):
         selected_product = next((p for p in products if p['product_name'] == product_name), None)
         if selected_product and optional_date:
-            response = requests.post(f'http://localhost:5001/{endpoint}', json={
+            response = requests.post(f'{PREDICTION_SERVER_URL}/{endpoint}', json={
                 'product_id': selected_product['product_id'],
                 'time_period': None,
                 'optional_date': optional_date.isoformat()
@@ -66,7 +68,7 @@ def prediction_form(prediction_type):
     if st.button(f'Predict {prediction_type} for Future Period'):
         selected_product = next((p for p in products if p['product_name'] == product_name), None)
         if selected_product and time_period:
-            response = requests.post(f'http://localhost:5001/{endpoint}', json={
+            response = requests.post(f'{PREDICTION_SERVER_URL}/{endpoint}', json={
                 'product_id': selected_product['product_id'],
                 'time_period': time_period,
                 'optional_date': None

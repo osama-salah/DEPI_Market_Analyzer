@@ -5,6 +5,11 @@ import streamlit as st
 
 SENTIMENT_SERVER_URL = 'http://localhost:5000'
 
+try:
+    rerun_flag
+except NameError:
+    rerun_flag = False
+
 # Function to generate star ratings with half-star using CSS
 def display_star_rating(rating):
     full_stars = int(rating)
@@ -22,7 +27,7 @@ def display_star_rating(rating):
 
 def display_result(result):
     # Display product name and "Insights" above the image
-    st.markdown(f'<h2 style="text-align: center; animation: fadeIn 2s;">Insights: {result["product"]}</h2>',
+    st.markdown(f'<h2 style="text-align: center; animation: fadeIn 2s;">{result["product"]}</h2>',
                 unsafe_allow_html=True)
 
     # Display product image with hover effect (with smaller size)
@@ -61,12 +66,43 @@ def display_result(result):
             f'<ul style="animation: fadeInRight 1.5s;">{"".join([f"<li>{con}</li>" for con in result["cons"]])}</ul>',
             unsafe_allow_html=True)
 
-    del st.session_state['result']
+    ad_button(st.session_state['result'])
 
-try:
-    rerun_flag
-except NameError:
-    rerun_flag = False
+    if 'ad_result' in st.session_state:
+        display_ad_result(st.session_state.ad_result)
+
+
+def display_ad_result(ad_result):
+    print('ad_text: ', ad_result["ad_text"])
+    st.markdown(f'''
+        <div style="
+            background-color: #f0f8ff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            animation: fadeInUp 2s ease-in-out;
+            font-size: 18px;
+            color: #333;
+            font-family: Arial, sans-serif;
+            ">{ad_result["ad_text"]}</div>''', unsafe_allow_html=True)
+    del st.session_state['ad_result']
+
+def ad_button(result):
+    if st.button("Create ad", disabled=st.session_state.processing):
+        response = requests.post(f'{SENTIMENT_SERVER_URL}/create_ad', json={
+            'product_name': st.session_state.result['product'],
+            'summary': result['summary'],
+            'pros': result['pros'],
+            'cons': result['cons'],
+            'product_url': result['product_url'],
+        })
+        if response.status_code == 200:
+            st.session_state.ad_result = response.json()  # Store the result in session state
+
+            # st.rerun()  # Rerun to display result in a new function
+        else:
+            st.error("Failed to get prediction")
 
 def sentiment_analyzer_form():
     global rerun_flag
@@ -77,6 +113,13 @@ def sentiment_analyzer_form():
     product_url = st.text_input("Enter Product URL", "", disabled=st.session_state.processing)
 
     if st.button("Get Insights", disabled=st.session_state.processing) or rerun_flag:
+        # Clear the previous result
+        try:
+            del st.session_state['result']
+            del st.session_state['ad_result']
+        except KeyError:
+            pass
+
         if product_url or rerun_flag:
             if not rerun_flag:
                 st.session_state.processing = True
@@ -89,7 +132,7 @@ def sentiment_analyzer_form():
 
                 try:
                     # Stream progress from the server
-                    with st.spinner('Fetching product details...'):
+                    with st.spinner('Preparing product insights...'):
                         progress_bar = st.progress(0)
                         status_text = st.empty()
                         with requests.post(f'{SENTIMENT_SERVER_URL}/analyze', json={'url': product_url}, stream=True) as response:
