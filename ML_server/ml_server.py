@@ -44,6 +44,29 @@ def run_spider(urls, results_queue):
 def spider_process(urls, results_queue):
     run_spider(urls, results_queue)
 
+def compose_ad(product_name, summary, pros, cons, product_url):
+    genai.configure(api_key=os.environ['GENAI_API_KEY'])
+
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    response = model.generate_content(
+        f'Write a social-media ad for the following product {product_name} \
+        Summary: {summary} \
+        Pros: {pros} \
+        Cons: {cons} \
+        Never use markdown styling (no # nor *). \
+        Never include internal CSS.\
+        The ad should be attractive and inducing, but not misleading. \
+        Always encourage customers to purchase. \
+        Format the response using html/css only but do not add any format specifiers \
+        and do not include the containing <div></div> tags.  \
+        Make the ad eye-catching. Use emojis if needed. Do not add images to the ad.\
+        Write only the content of the <div> without the <div> tag \
+        Add the following product url (in a hyperlink): {product_url} \
+        in <a> tag with an attractive label.' \
+    )
+
+    return response.text
+
 def process_request(request):
     urls = [request]
     results_queue = MPQueue()
@@ -54,7 +77,7 @@ def process_request(request):
     data = results_queue.get()
     p.join()
 
-    if data.empty:
+    if data.empty or data['review_body'].isna().all():
         return {
             "product": request,
             "error": "No data was scraped. Please check the URL and try again."
@@ -70,7 +93,6 @@ def process_request(request):
         else:
             yield progress_update  # Yield progress
 
-    # Further processing using GENAI
     genai.configure(api_key=os.environ['GENAI_API_KEY'])
 
     sentiment_result = json.loads(sentiment_result)
@@ -86,7 +108,7 @@ def process_request(request):
     image_url = data['image_url'][0]
 
     # Yield final output as JSON
-    yield json.dumps({'result': {
+    yield json.dumps({'insights_result': {
         "product": product,
         "price": price,
         "pros": pros,
@@ -112,6 +134,20 @@ def analyze():
     # This response will stream progress updates back to the client
     return Response(generate(), mimetype='application/json')
 
+@app.route('/create_ad', methods=['POST'])
+def create_ad():
+    data = request.json
+    product_name = data['product_name']
+    summary = data['summary']
+    pros = data['pros']
+    cons = data['cons']
+    product_url = data['product_url']
+
+    ad_text = compose_ad(product_name, summary, pros, cons, product_url)
+
+    print('ad_text: ', ad_text)
+    
+    return jsonify({'ad_text': ad_text})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

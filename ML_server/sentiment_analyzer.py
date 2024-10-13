@@ -140,8 +140,6 @@ def get_pros_cons(reviews, n_top=10):
     Do not add any other text except specified. Do not add any format specifiers\
    ')
 
-    print("Summarized Review:", response.text)
-
     j_response = json.loads(response.text)
 
     return j_response['pros'], j_response['cons'], j_response['summary']
