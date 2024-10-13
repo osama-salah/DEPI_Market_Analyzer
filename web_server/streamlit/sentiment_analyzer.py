@@ -1,4 +1,5 @@
 import json
+from itertools import product
 
 import requests
 import streamlit as st
@@ -66,7 +67,7 @@ def display_result(result):
             f'<ul style="animation: fadeInRight 1.5s;">{"".join([f"<li>{con}</li>" for con in result["cons"]])}</ul>',
             unsafe_allow_html=True)
 
-    ad_button(st.session_state['result'])
+    ad_button(st.session_state['insights_result'])
 
     if 'ad_result' in st.session_state:
         display_ad_result(st.session_state.ad_result)
@@ -86,12 +87,13 @@ def display_ad_result(ad_result):
             color: #333;
             font-family: Arial, sans-serif;
             ">{ad_result["ad_text"]}</div>''', unsafe_allow_html=True)
-    del st.session_state['ad_result']
+
+    # del st.session_state['ad_result']
 
 def ad_button(result):
     if st.button("Create ad", disabled=st.session_state.processing):
         response = requests.post(f'{SENTIMENT_SERVER_URL}/create_ad', json={
-            'product_name': st.session_state.result['product'],
+            'product_name': st.session_state.insights_result['product'],
             'summary': result['summary'],
             'pros': result['pros'],
             'cons': result['cons'],
@@ -110,15 +112,19 @@ def sentiment_analyzer_form():
     st.write('<p style="text-align: center; animation: fadeInUp 1.5s;">Get detailed insights into any product instantly by entering the product URL below.</p>', unsafe_allow_html=True)
 
     # Input for product URL
-    product_url = st.text_input("Enter Product URL", "", disabled=st.session_state.processing)
+    product_url_init_val = ""
+    if 'product_url' in st.session_state:
+        product_url_init_val = st.session_state['product_url']
+    product_url = st.text_input("Enter Product URL", product_url_init_val, disabled=st.session_state.processing)
 
     if st.button("Get Insights", disabled=st.session_state.processing) or rerun_flag:
-        # Clear the previous result
-        try:
-            del st.session_state['result']
-            del st.session_state['ad_result']
-        except KeyError:
-            pass
+        # # Clear the previous results
+        # if 'insights_result' in st.session_state:
+        #     del st.session_state['insights_result']
+        # if 'ad_result' in st.session_state:
+        #     del st.session_state['ad_result']
+
+        st.session_state.product_url = product_url
 
         if product_url or rerun_flag:
             if not rerun_flag:
@@ -147,16 +153,16 @@ def sentiment_analyzer_form():
                                         progress_bar.progress(progress)
                                         status_text.text(f"Loading... {progress}%")
 
-                                    # If final result
-                                    if "result" in progress_data:
-                                        st.session_state.result = progress_data['result']
-                                        st.session_state.result['product_url'] = product_url
-                                        break  # Stop the loop once final result is received
+                                    # If final insights_result
+                                    if "insights_result" in progress_data:
+                                        st.session_state.insights_result = progress_data['insights_result']
+                                        st.session_state.insights_result['product_url'] = product_url
+                                        break  # Stop the loop once final insights_result is received
 
                     if response.status_code == 200:
                         rerun_flag = False
                         st.session_state.processing = False
-                        st.rerun()  # Re-run Streamlit to show the result
+                        st.rerun()  # Re-run Streamlit to show the insights_result
                     else:
                         st.error(f'Failed to get prediction: {response.status_code}')
 
@@ -165,8 +171,8 @@ def sentiment_analyzer_form():
         else:
             st.error("Please enter a valid product URL.")
 
-    # Display the result if it exists in session state
-    if 'result' in st.session_state:
-        display_result(st.session_state.result)
+    # Display the insights_result if it exists in session state
+    if 'insights_result' in st.session_state:
+        display_result(st.session_state.insights_result)
 
     st.session_state.is_running = False  # Re-enable the navigation once done
