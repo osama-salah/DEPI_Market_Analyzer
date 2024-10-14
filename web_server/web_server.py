@@ -49,15 +49,21 @@ def get_prediction(endpoint, data):
             response.raise_for_status()
 
             result = response.json()
-            # Get the image URL using the prediction_id
-            result['image_url'] = f'{PREDICTION_SERVER_URL}/get_image/{result["prediction_id"]}'
+
+            # Get the data_path using the prediction_id
+            result['data_path'] = f'{PREDICTION_SERVER_URL}/get_data/{result["prediction_id"]}'
 
             result['product_name'] = \
                 product_id_name_mapping[product_id_name_mapping['Item Code'] == product_id]['Item Name'].iloc[0]
 
             result['optional_date'] = optional_date
 
-            prediction_name = 'predicted_price' if endpoint == 'predict_price' else 'predicted_demand'
+            if endpoint == 'predict_price':
+                prediction_name = 'predicted_price'
+                result["type"] = "Price"
+            else:
+                prediction_name = 'predicted_demand'
+                result["type"] = "Demand"
 
             if result[prediction_name]:
                 result[prediction_name] = round(result[prediction_name], 2)

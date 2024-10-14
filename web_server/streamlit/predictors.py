@@ -1,26 +1,45 @@
 import streamlit as st
 import requests
+import pandas as pd
+import graph_plot as graph_plot
 
 PREDICTION_SERVER_URL = 'http://localhost:5001'
 
 # Function to display the prediction result
 def display_result(result):
-    st.title(f"Price Prediction Result for: {result['product_name']}")
+    print('result: ', result)
 
-    # Display predicted price if available
-    if result.get('predicted_price') is not None:
-        st.subheader(f"Predicted Price: ${result['predicted_price']}")
-        if result.get('optional_date'):
+    if 'price_result' in st.session_state and 'predicted_price' in result:
+        st.title(f"Price Prediction Result for: {result['product_name']}")
+
+        # Display predicted price if available
+        if result.get('predicted_price') is not None:
+            st.subheader(f"Predicted Price: ${result['predicted_price']}")
             st.write(f"At date: {result['optional_date']}")
 
-    # Handle errors
-    if result.get('error'):
-        st.error(f"Error: {result['error']}")
-    else:
-        # Display the prediction image
-        st.image(result['image_url'], caption="Price Prediction Graph", width=800)
+        # Handle errors
+        if result.get('error'):
+            st.error(f"Error: {result['error']}")
+        else:
+            # Display the prediction Graph
+            graph_data = pd.read_csv(result['data_path'])
+            graph_plot.plot(graph_data, result["type"])
 
-    del st.session_state['result']
+    if 'demand_result' in st.session_state and 'predicted_demand' in result:
+        st.title(f"Demand Prediction Result for: {result['product_name']}")
+
+        # Display predicted price if available
+        if result.get('predicted_price') is not None:
+            st.subheader(f"Predicted Demand: ${result['predicted_demand']}")
+            st.write(f"At date: {result['optional_date']}")
+
+        # Handle errors
+        if result.get('error'):
+            st.error(f"Error: {result['error']}")
+        else:
+            # Display the prediction Graph
+            graph_data = pd.read_csv(result['data_path'])
+            graph_plot.plot(graph_data, result["type"])
 
 def prediction_form(prediction_type):
     if prediction_type == 'Price':
@@ -49,6 +68,12 @@ def prediction_form(prediction_type):
 
     # Button to predict price/demand at a specific date
     if st.button(f'Predict {prediction_type} at Specific Date'):
+        # Remove previous results if exist
+        if 'price_result' in st.session_state:
+            del st.session_state['price_result']
+        if 'demand_result' in st.session_state:
+            del st.session_state['demand_result']
+
         selected_product = next((p for p in products if p['product_name'] == product_name), None)
         if selected_product and optional_date:
             response = requests.post(f'{PREDICTION_SERVER_URL}/{endpoint}', json={
@@ -57,7 +82,10 @@ def prediction_form(prediction_type):
                 'optional_date': optional_date.isoformat()
             })
             if response.status_code == 200:
-                st.session_state.result = response.json()  # Store the result in session state
+                if prediction_type == 'Price':
+                    st.session_state.price_result = response.json()  # Store the result in session state
+                elif prediction_type == 'Demand':
+                    st.session_state.demand_result = response.json()  # Store the result in session state
                 st.rerun()  # Rerun to display result in a new function
             else:
                 st.error("Failed to get prediction")
@@ -74,7 +102,10 @@ def prediction_form(prediction_type):
                 'optional_date': None
             })
             if response.status_code == 200:
-                st.session_state.result = response.json()  # Store the result in session state
+                if prediction_type == 'Price':
+                    st.session_state.price_result = response.json()  # Store the result in session state
+                elif prediction_type == 'Demand':
+                    st.session_state.demand_result = response.json()  # Store the result in session state
                 st.rerun()  # Rerun to display result in a new function
             else:
                 st.error("Failed to get prediction")
@@ -82,5 +113,8 @@ def prediction_form(prediction_type):
             st.warning("Please select a product and provide a time period.")
 
     # Display the result if it exists in session state
-    if 'result' in st.session_state:
-        display_result(st.session_state.result)  # Call the display function
+    if 'price_result' in st.session_state and prediction_type == 'Price':
+        display_result(st.session_state.price_result)  # Call the display function
+
+    if 'demand_result' in st.session_state  and prediction_type == 'Demand':
+        display_result(st.session_state.demand_result)  # Call the display function

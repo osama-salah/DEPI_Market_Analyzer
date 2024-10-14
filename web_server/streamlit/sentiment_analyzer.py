@@ -56,15 +56,15 @@ def display_result(result):
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown('<h3 style="animation: fadeInLeft 1s;">Pros ✅</h3>', unsafe_allow_html=True)
+        st.markdown('<h3 style="animation: fadeInLeft 1s; ">Pros ✅</h3>', unsafe_allow_html=True)
         st.write(
-            f'<ul style="animation: fadeInLeft 1.5s;">{"".join([f"<li>{pro}</li>" for pro in result["pros"]])}</ul>',
+            f'<ul style="animation: fadeInLeft 1.5s; list-style-type: disc; padding-left: 20px;">{"".join([f"<li>{pro}</li>" for pro in result["pros"]])}</ul>',
             unsafe_allow_html=True)
 
     with col2:
         st.markdown('<h3 style="animation: fadeInRight 1s;">Cons ❌</h3>', unsafe_allow_html=True)
         st.write(
-            f'<ul style="animation: fadeInRight 1.5s;">{"".join([f"<li>{con}</li>" for con in result["cons"]])}</ul>',
+            f'<ul style="animation: fadeInRight 1.5s; list-style-type: disc; padding-left: 20px;">{"".join([f"<li>{con}</li>" for con in result["cons"]])}</ul>',
             unsafe_allow_html=True)
 
     ad_button(st.session_state['insights_result'])
@@ -118,11 +118,11 @@ def sentiment_analyzer_form():
     product_url = st.text_input("Enter Product URL", product_url_init_val, disabled=st.session_state.processing)
 
     if st.button("Get Insights", disabled=st.session_state.processing) or rerun_flag:
-        # # Clear the previous results
-        # if 'insights_result' in st.session_state:
-        #     del st.session_state['insights_result']
-        # if 'ad_result' in st.session_state:
-        #     del st.session_state['ad_result']
+        # Clear the previous results
+        if 'insights_result' in st.session_state:
+            del st.session_state['insights_result']
+        if 'ad_result' in st.session_state:
+            del st.session_state['ad_result']
 
         st.session_state.product_url = product_url
 
