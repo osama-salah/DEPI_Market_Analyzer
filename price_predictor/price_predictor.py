@@ -55,6 +55,11 @@ def run_price_predictor(product_id, time_period, optional_date):
         time_period = int(time_period)
 
     item_data = data[data['Item Code'] == product_id]
+
+    his_data = item_data[['ds','y']].copy()
+    his_data.columns = ["Date","Price"]
+    his_data['Type'] = 'Historical'
+
     item_data.loc[:, 'ds'] = np.array(item_data['ds'])
 
     model = Prophet(yearly_seasonality=False, changepoint_prior_scale=0.001)
@@ -68,16 +73,17 @@ def run_price_predictor(product_id, time_period, optional_date):
     future = model.make_future_dataframe(periods=time_period)
     forecast = model.predict(future)
 
+    cast_data = forecast[['ds','yhat']].copy()
+    cast_data.columns = ["Date","Price"]
+    cast_data['Type'] = 'Forecast'
+    cast_data = cast_data[cast_data['Date'] > his_data.max()["Date"]]
+    graph_data = pd.concat([his_data, cast_data], ignore_index=True)
+
     predicted_price = None
     if optional_date:
         predicted_price = forecast[forecast['ds'] == optional_date]['yhat'].iloc[-1]
 
-    fig = model.plot(forecast)
-    img = io.BytesIO()
-    fig.savefig(img, format='png')
-    img.seek(0)
-
-    return predicted_price, img
+    return predicted_price, graph_data
 
 def run_demand_predictor(product_id, time_period, optional_date):
     data = load_data('super_market_sales')
@@ -89,6 +95,10 @@ def run_demand_predictor(product_id, time_period, optional_date):
 
     # Handling Negative Quantities
     item_data = item_data[item_data['y'] >= 0]
+
+    his_data = item_data[['ds','y']].copy()
+    his_data.columns = ["Date","Price"]
+    his_data['Type'] = 'Historical'
 
     # Ensure the 'ds' column is a numpy array
     item_data.loc[:, 'ds'] = np.array(item_data['ds'])
@@ -107,39 +117,39 @@ def run_demand_predictor(product_id, time_period, optional_date):
     future = model.make_future_dataframe(periods=time_period)
     forecast = model.predict(future)
 
+    cast_data = forecast[['ds','yhat']].copy()
+    cast_data.columns = ["Date","Price"]
+    cast_data['Type'] = 'Forecast'
+    cast_data = cast_data[cast_data['Date'] > his_data.max()["Date"]]
+    graph_data = pd.concat([his_data, cast_data], ignore_index=True)
+
     predicted_demand = None
     if optional_date:
         predicted_demand = forecast[forecast['ds'] == optional_date]['yhat'].iloc[-1]
 
-    fig = model.plot(forecast)
-    img = io.BytesIO()
-    fig.savefig(img, format='png')
-    img.seek(0)
-
-    return predicted_demand, img
+    return predicted_demand, graph_data
 
 def cache_prediction(product_id, time_period, optional_date, prediction_type):
     if prediction_type == 'price':
-        predicted_value, img = run_price_predictor(product_id, time_period, optional_date)
+        predicted_value, graph_data = run_price_predictor(product_id, time_period, optional_date)
     elif prediction_type == 'demand':
-        predicted_value, img = run_demand_predictor(product_id, time_period, optional_date)
+        predicted_value, graph_data = run_demand_predictor(product_id, time_period, optional_date)
     else:
         raise ValueError("Invalid prediction type")
 
     # Generate a unique ID for this prediction
     prediction_id = str(uuid.uuid4())
 
-    # Save the image to a file
-    img_path = f'temp_{prediction_id}.png'
-    with open(img_path, 'wb') as f:
-        f.write(img.getvalue())
+    # save data_graph
+    data_path = f'temp_{prediction_id}.csv'
+    graph_data.to_csv(data_path, index=False)
 
     # Store the result in the cache
     with cache_lock:
         cache[prediction_id] = {
             'product_id': product_id,
             'predicted_value': predicted_value,
-            'img_path': img_path,
+            'data_path': data_path,
             'timestamp': datetime.now(),
             'prediction_type': prediction_type
         }
@@ -185,15 +195,14 @@ def predict_demand():
 
     return jsonify(response)
 
-
-@app.route('/get_image/<prediction_id>', methods=['GET'])
-def get_image(prediction_id):
+@app.route('/get_data/<prediction_id>', methods=['GET'])
+def get_data(prediction_id):
     with cache_lock:
         if prediction_id not in cache:
-            return "Image not found", 404
-        img_path = cache[prediction_id]['img_path']
+            return "Data not found", 404
+        data_path = cache[prediction_id]['data_path']
 
-    return send_file(img_path, mimetype='image/png')
+    return send_file(data_path, mimetype='text/csv')
 
 def delete_file_if_exists(file_path):
     try:
@@ -208,10 +217,10 @@ def clean_cache():
         current_time = datetime.now()
         for prediction_id in list(cache.keys()):
             if current_time - cache[prediction_id]['timestamp'] > timedelta(minutes=1):
-                img_path = cache[prediction_id]['img_path']
-                delete_file_if_exists(img_path)
+                data_path = cache[prediction_id]['data_path']
+                delete_file_if_exists(data_path)
                 del cache[prediction_id]
-                print(f"Removed cache entry and image for prediction_id: {prediction_id}")
+                print(f"Removed cache entry and data for prediction_id: {prediction_id}")
 
 # Run cache cleaning every 5 minutes
 def cache_cleaning_job():

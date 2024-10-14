@@ -17,7 +17,6 @@ import os
 import gc
 
 def download_and_extract_data(url, csv_path):
-    # ToDo: remove this
     # Check if the file already exists
     if os.path.isfile(csv_path):
         print(f"Found {csv_path}")
