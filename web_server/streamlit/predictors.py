@@ -5,7 +5,8 @@ from urllib.error import HTTPError
 
 import graph_plot as graph_plot
 
-PREDICTION_SERVER_URL = 'http://localhost:5001'
+WEB_SERVER_URL = 'http://localhost:5001'
+# WEB_SERVER_URL = 'http://192.168.12.119:5001'
 
 # Function to display the prediction result
 def display_result(result):
@@ -61,7 +62,7 @@ def prediction_form(prediction_type):
     st.title(f'Product {prediction_type} Prediction')
 
     # Get the list of products
-    response = requests.get(f'{PREDICTION_SERVER_URL}/get_products')
+    response = requests.get(f'{WEB_SERVER_URL}/get_products')
     products = response.json()
 
     # Dropdown for product selection
@@ -84,7 +85,7 @@ def prediction_form(prediction_type):
 
         selected_product = next((p for p in products if p['product_name'] == product_name), None)
         if selected_product and optional_date:
-            response = requests.post(f'{PREDICTION_SERVER_URL}/{endpoint}', json={
+            response = requests.post(f'{WEB_SERVER_URL}/{endpoint}', json={
                 'product_id': selected_product['product_id'],
                 'time_period': None,
                 'optional_date': optional_date.isoformat()
@@ -104,7 +105,7 @@ def prediction_form(prediction_type):
     if st.button(f'Predict {prediction_type} for Future Period'):
         selected_product = next((p for p in products if p['product_name'] == product_name), None)
         if selected_product and time_period:
-            response = requests.post(f'{PREDICTION_SERVER_URL}/{endpoint}', json={
+            response = requests.post(f'{WEB_SERVER_URL}/{endpoint}', json={
                 'product_id': selected_product['product_id'],
                 'time_period': time_period,
                 'optional_date': None

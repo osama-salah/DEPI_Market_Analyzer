@@ -4,7 +4,8 @@ from itertools import product
 import requests
 import streamlit as st
 
-SENTIMENT_SERVER_URL = 'http://localhost:5000'
+SENTIMENT_SERVER_URL = 'http://192.168.12.119:5000'
+# SENTIMENT_SERVER_URL = 'http://localhost:5000'
 
 try:
     rerun_flag
