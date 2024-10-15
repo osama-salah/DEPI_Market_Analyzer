@@ -1,14 +1,14 @@
 import streamlit as st
 import requests
 import pandas as pd
+from urllib.error import HTTPError
+
 import graph_plot as graph_plot
 
 PREDICTION_SERVER_URL = 'http://localhost:5001'
 
 # Function to display the prediction result
 def display_result(result):
-    print('result: ', result)
-
     if 'price_result' in st.session_state and 'predicted_price' in result:
         st.title(f"Price Prediction Result for: {result['product_name']}")
 
@@ -22,8 +22,12 @@ def display_result(result):
             st.error(f"Error: {result['error']}")
         else:
             # Display the prediction Graph
-            graph_data = pd.read_csv(result['data_path'])
-            graph_plot.plot(graph_data, result["type"])
+            try:
+                graph_data = pd.read_csv(result['data_path'])
+                graph_plot.plot(graph_data, result["type"])
+            except HTTPError:
+                del st.session_state['price_result']
+                st.error(f"The graph has been un-cached")
 
     if 'demand_result' in st.session_state and 'predicted_demand' in result:
         st.title(f"Demand Prediction Result for: {result['product_name']}")
@@ -38,8 +42,12 @@ def display_result(result):
             st.error(f"Error: {result['error']}")
         else:
             # Display the prediction Graph
-            graph_data = pd.read_csv(result['data_path'])
-            graph_plot.plot(graph_data, result["type"])
+            try:
+                graph_data = pd.read_csv(result['data_path'])
+                graph_plot.plot(graph_data, result["type"])
+            except HTTPError:
+                del st.session_state['demand_result']
+                st.error(f"The graph has been un-cached")
 
 def prediction_form(prediction_type):
     if prediction_type == 'Price':

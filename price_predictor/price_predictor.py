@@ -216,7 +216,7 @@ def clean_cache():
     with cache_lock:
         current_time = datetime.now()
         for prediction_id in list(cache.keys()):
-            if current_time - cache[prediction_id]['timestamp'] > timedelta(minutes=1):
+            if current_time - cache[prediction_id]['timestamp'] > timedelta(minutes=CACHE_TIME):
                 data_path = cache[prediction_id]['data_path']
                 delete_file_if_exists(data_path)
                 del cache[prediction_id]
