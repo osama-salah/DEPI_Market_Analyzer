@@ -4,10 +4,10 @@ import pandas as pd
 
 app = Flask(__name__)
 
-# PREDICTION_SERVER_URL = 'http://192.168.12.119:5002'
-# SENTIMENT_SERVER_URL = 'http://192.168.12.119:5000'
-PREDICTION_SERVER_URL = 'http://localhost:5002'
-SENTIMENT_SERVER_URL = 'http://localhost:5000'
+PREDICTION_SERVER_URL = 'http://192.168.12.6:5002'
+SENTIMENT_SERVER_URL = 'http://192.168.12.6:5000'
+# PREDICTION_SERVER_URL = 'http://localhost:5002'
+# SENTIMENT_SERVER_URL = 'http://localhost:5000'
 
 product_id_name_mapping = pd.DataFrame()
 
