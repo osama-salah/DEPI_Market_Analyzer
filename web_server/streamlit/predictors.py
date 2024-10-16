@@ -6,7 +6,6 @@ from urllib.error import HTTPError
 import graph_plot as graph_plot
 
 WEB_SERVER_URL = 'http://localhost:5001'
-# WEB_SERVER_URL = 'http://192.168.12.119:5001'
 
 # Function to display the prediction result
 def display_result(result):
