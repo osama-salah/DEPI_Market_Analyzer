@@ -53,6 +53,10 @@ def display_result(result):
     st.markdown('<h3 style="text-align: center; animation: fadeIn 1.5s;">Product Rating</h3>', unsafe_allow_html=True)
     st.write(display_star_rating(result['avg_rating']), unsafe_allow_html=True)
 
+    # Display positive and negative review count
+    st.markdown(f'<h5 style="text-align: center; animation: fadeIn 2s;">{result["positive_reviews"]} Positive reviews</h3>', unsafe_allow_html=True)
+    st.markdown(f'<h5 style="text-align: center; animation: fadeIn 2s;">{result["negative_reviews"]} Negative reviews</h3>', unsafe_allow_html=True)
+
     # Display Pros and Cons with styled columns
     col1, col2 = st.columns(2)
 

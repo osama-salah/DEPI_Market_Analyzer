@@ -46,3 +46,6 @@ Thumbs.db
 
 # Cache files
 temp_*
+
+# Dolphin direcotry file
+.directory
