@@ -13,7 +13,7 @@ def plot(data,type):
         x=data[data['Type'] == 'Historical']["Date"],
         y=data[data['Type'] == 'Historical']["Price"],
         mode='lines',
-        name='Historical Price',
+        name='Historical '+type,
         line=dict(color='blue', width=3),
         hovertemplate='%{y:.2f}<extra></extra>'
     ))
@@ -23,7 +23,7 @@ def plot(data,type):
         x=data[data['Type'] == 'Forecast']["Date"],
         y=data[data['Type'] == 'Forecast']["Price"],
         mode='lines',
-        name='Forecasted Price',
+        name='Forecasted '+type,
         line=dict(color='red', width=3, dash='dash'),
         hovertemplate='%{y:.2f}<extra></extra>'
     ))
@@ -57,7 +57,7 @@ def plot(data,type):
 
     # Layout and design improvements
     fig.update_layout(
-        title="Price Forecast",
+        title= type +"   Forecast",
         xaxis_title="Date",
         yaxis_title= type,
         hovermode="x unified",
@@ -77,7 +77,7 @@ def plot(data,type):
     # Render Plotly chart in Streamlit
     st.plotly_chart(fig, use_container_width=True)
 
-    '''# Optional: show raw data
-    if st.checkbox("Show raw data"):
-        st.subheader("Raw Data")
-        st.write(data)'''
+    # Optional: show raw data
+
+    st.subheader("Raw Data")
+    st.write(data)

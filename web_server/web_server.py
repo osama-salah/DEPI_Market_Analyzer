@@ -4,12 +4,12 @@ import pandas as pd
 
 app = Flask(__name__)
 
-# PREDICTION_SERVER_URL = 'http://192.168.12.6:5002'
-PREDICTION_SERVER_URL = 'http://localhost:5002'
 
 # TODO Move communication with the ML server from Streamlit to this Web Server
-# SENTIMENT_SERVER_URL = 'http://localhost:5000'
-# SENTIMENT_SERVER_URL = 'http://192.168.12.6:5000'
+#PREDICTION_SERVER_URL = 'http://192.168.12.6:5002'
+#SENTIMENT_SERVER_URL = 'http://192.168.12.6:5000'
+PREDICTION_SERVER_URL = 'http://localhost:5002'
+SENTIMENT_SERVER_URL = 'http://localhost:5000'
 
 product_id_name_mapping = pd.DataFrame()
 
@@ -41,6 +41,7 @@ def get_prediction(endpoint, data):
     try:
         url = f'{PREDICTION_SERVER_URL}/{endpoint}'
         product_id = data.get('product_id', None)
+        print(product_id)
         time_period = data.get('time_period', None)
         optional_date = data.get('optional_date', None)
 
