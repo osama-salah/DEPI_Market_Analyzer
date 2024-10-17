@@ -39,6 +39,7 @@ def get_prediction(endpoint, data):
     try:
         url = f'{PREDICTION_SERVER_URL}/{endpoint}'
         product_id = data.get('product_id', None)
+        print(product_id)
         time_period = data.get('time_period', None)
         optional_date = data.get('optional_date', None)
 
