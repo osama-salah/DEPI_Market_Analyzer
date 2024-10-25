@@ -75,6 +75,8 @@ def process_request(request):
     p = Process(target=spider_process, args=(urls, results_queue))
     p.start()
     data = results_queue.get()
+    print('Got data with length: ', len(data))
+    
     p.join()
 
     if data.empty or data['review_body'].isna().all():

@@ -38,7 +38,7 @@ class AmazonSpider(scrapy.Spider):
             price_parts.append(f".{fraction}")
         price = ''.join(price_parts).strip()
 
-        review_blocks = response.css('.review')
+        review_blocks = response.css('.a-section.review')
 
         if not review_blocks:
             self.logger.warning(f"No reviews found on page: {response.url}")
@@ -47,6 +47,7 @@ class AmazonSpider(scrapy.Spider):
             items = AmazonscrapItem()
 
             review_body = review.css('.review-text-content span::text').get()
+
             review_rating = review.css('.review-rating span::text').get()
 
             helpful_text = review.css('.cr-vote-text::text').get()
